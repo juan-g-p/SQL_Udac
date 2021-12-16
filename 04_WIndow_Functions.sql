@@ -1,5 +1,12 @@
 /********************************************************************
-CUMSUM
+OVER CLAUSE() ORDER BY AND PARTITION FUNCTIONS
+********************************************************************/
+-- The OVER() clause has the following capabilities:
+       -- Defines window partitions to form groups of rows (PARTITION BY clause).
+       -- Orders rows within a partition (ORDER BY clause).
+
+/********************************************************************
+CUMSUM EXAMPLE
 ********************************************************************/
 -- 1. Create a running total of standard_amt_usd (in the orders table) 
 -- over order time with no date truncation. Your final table should have 
@@ -21,6 +28,8 @@ FROM orders
 -- the truncated date, and a final column with the running total within each year.
 /*
 CUMSUM POR AÑO
+Resetea el contador de cumsum cada cambio de año.
+PARTITION BY --> indica el subconjunto de agregación.
 */
 SELECT standard_amt_usd,
        DATE_TRUNC('year', occurred_at) as year,
@@ -33,8 +42,17 @@ FROM orders
 AGGREGATE FUNCTIONS AND PARTITION
 ********************************************************************/
 /********************************************************************
-ORDER BY AND PARTITION FUNCTIONS
+OVER CLAUSE() ORDER BY AND PARTITION FUNCTIONS
 ********************************************************************/
+-- https://www.databasejournal.com/features/mssql/introduction-to-the-partition-by-window-function.html
+-- https://drill.apache.org/docs/sql-window-functions-introduction/
+
+-- The OVER() clause has the following capabilities:
+       -- PARTITION BY: Defines window partitions to form groups of rows
+              -- PARTITION BY - PARTITION BY resets its counter every time a given column changes values.
+       -- ORDER BY Orders rows within a partition
+              -- ORDER BY - ORDER BY orders the rows (in the window only) the function evaluates.
+
 -- The ORDER BY clause is one of two clauses integral to window functions. 
 -- The ORDER and PARTITION define what is referred to as the “window”—the 
 -- ordered subset of data over which calculations are made. Removing ORDER BY 
@@ -43,6 +61,9 @@ ORDER BY AND PARTITION FUNCTIONS
 -- of all the standard_qty values in its respective account_id.
 
 -- Example:
+-- Example:
+       -- SUM(standard_qty) OVER (PARTITION BY account_id ORDER BY DATE_TRUNC('month',occurred_at)) AS sum_std_qty,
+       -- PARTITION BY -->
 SELECT id,
        account_id,
        standard_qty,
@@ -58,6 +79,7 @@ FROM orders
 -- Example:
 -- When we omit the order by statement the functions applied are not run month by month, but only account
 -- by account.
+-- Example: the same cumsum for each account and not divided by the month
 SELECT id,
        account_id,
        standard_qty,
