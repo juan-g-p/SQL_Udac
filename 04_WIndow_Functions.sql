@@ -1,9 +1,20 @@
 /********************************************************************
-OVER CLAUSE() ORDER BY AND PARTITION FUNCTIONS
+OVER CLAUSE() ORDER BY AND PARTITION BY CLAUSES
 ********************************************************************/
+-- https://www.databasejournal.com/features/mssql/introduction-to-the-partition-by-window-function.html
+-- https://drill.apache.org/docs/sql-window-functions-introduction/
+
 -- The OVER() clause has the following capabilities:
-       -- Defines window partitions to form groups of rows (PARTITION BY clause).
-       -- Orders rows within a partition (ORDER BY clause).
+       -- PARTITION BY: Defines window partitions to form groups of rows
+              -- PARTITION BY - PARTITION BY resets the value of the aggregating function everytime the
+              -- column used in the partition by criteria changes
+              -- Example: in a SUM() OVER (a cumsum), the sum counter y reset to zero everytime the column used
+              -- in the PARTITION BY CRITERIA
+       -- ORDER BY Orders rows within a partition:
+              -- ORDER BY - ORDER BY orders the rows (in the window only) the function evaluates.
+              -- It adds the aggregated values in chunks with the same ORDER BY criteria.
+              -- Example: in a SUM() OVER (cumsum) all the rows matching in ORDER BY creatiria will have
+              -- the same value.
 
 /********************************************************************
 CUMSUM EXAMPLE
@@ -16,6 +27,7 @@ CUMSUM EXAMPLE
 /*
 CUMSUM
 */
+
 SELECT standard_amt_usd,
        SUM(standard_amt_usd) OVER (ORDER BY occurred_at) AS running_total
 FROM orders
@@ -41,17 +53,6 @@ FROM orders
 /********************************************************************
 AGGREGATE FUNCTIONS AND PARTITION
 ********************************************************************/
-/********************************************************************
-OVER CLAUSE() ORDER BY AND PARTITION FUNCTIONS
-********************************************************************/
--- https://www.databasejournal.com/features/mssql/introduction-to-the-partition-by-window-function.html
--- https://drill.apache.org/docs/sql-window-functions-introduction/
-
--- The OVER() clause has the following capabilities:
-       -- PARTITION BY: Defines window partitions to form groups of rows
-              -- PARTITION BY - PARTITION BY resets its counter every time a given column changes values.
-       -- ORDER BY Orders rows within a partition
-              -- ORDER BY - ORDER BY orders the rows (in the window only) the function evaluates.
 
 -- The ORDER BY clause is one of two clauses integral to window functions. 
 -- The ORDER and PARTITION define what is referred to as the “window”—the 
