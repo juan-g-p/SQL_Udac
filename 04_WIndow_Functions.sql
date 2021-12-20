@@ -26,8 +26,11 @@ CUMSUM EXAMPLE
 
 /*
 CUMSUM
+The over clause only has an ORDER BY clause and not a PARTITION BY. The counter
+is never reset (the sum occurs over the whole dataset), ordering by date. Since
+the occurred_at column never repeats itself, the running_total column is constantly
+changing.
 */
-
 SELECT standard_amt_usd,
        SUM(standard_amt_usd) OVER (ORDER BY occurred_at) AS running_total
 FROM orders
