@@ -305,3 +305,8 @@ SELECT account_id,
        NTILE(100) OVER (PARTITION BY account_id ORDER BY total_amt_usd) as total_percentile
 FROM orders
 ORDER BY account_id DESC, total_percentile DESC
+
+/*
+MORE DOCUMENTATION
+https://www.postgresql.org/docs/8.4/functions-window.html
+*/
