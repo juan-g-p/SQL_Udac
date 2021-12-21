@@ -12,8 +12,9 @@ OVER CLAUSE() ORDER BY AND PARTITION BY CLAUSES
               -- in the PARTITION BY CRITERIA
        -- ORDER BY Orders rows within a partition:
               -- ORDER BY - ORDER BY orders the rows (in the window only) the function evaluates.
+              -- Rows that have the same ORDER BY value will be aggregated together and assigned the same value.
               -- It adds the aggregated values in chunks with the same ORDER BY criteria.
-              -- Example: in a SUM() OVER (cumsum) all the rows matching in ORDER BY creatiria will have
+              -- Example: in a SUM() OVER (cumsum) all the rows matching in ORDER BY creatiria will have.
               -- the same value.
 
 /********************************************************************
@@ -70,7 +71,6 @@ FROM orders
 AGGREGATE FUNCTIONS AND PARTITION
 ********************************************************************/
 
--- The ORDER BY clause is one of two clauses integral to window functions. 
 -- The ORDER and PARTITION define what is referred to as the “window”—the 
 -- ordered subset of data over which calculations are made. Removing ORDER BY 
 -- just leaves an unordered partition; in our query's case, each column's value 
@@ -111,11 +111,10 @@ FROM orders
 
 /********************************************************************
 RANKING WINDOW FUNCTIONS
+ROW_NUMBER(): distinct numbers for each record
+RANK(): ties are given the same numbers and numbers are skipped for subsequent records
+DENSE_RANK(): ties are given the same number and numbers are not skipped for subsequent records
 ********************************************************************/
--- Example:
--- Row_nunber(): distinct numbers for each record
--- Rank(): ties are given the same numbers and numbers are skipped for subsequent records
--- Dense_rank(): ties are given the same number and numbers are not skipped for subsequent records
 
 -- Select the id, account_id, and total variable from the orders table, then create a column 
 -- called total_rank that ranks this total amount of paper ordered (from highest to lowest) 
