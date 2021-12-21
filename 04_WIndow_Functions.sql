@@ -43,14 +43,27 @@ FROM orders
 -- the truncated date, and a final column with the running total within each year.
 /*
 CUMSUM POR AÑO
-Resetea el contador de cumsum cada cambio de año.
-PARTITION BY --> indica el subconjunto de agregación.
+PARTITION BY Resetea el contador de cumsum cada cambio de año.
 */
 SELECT standard_amt_usd,
        DATE_TRUNC('year', occurred_at) as year,
        SUM(standard_amt_usd) OVER 
        (PARTITION BY DATE_TRUNC('year', occurred_at) 
         ORDER BY occurred_at) AS running_total
+FROM orders
+
+/*
+CUMSUM POR AÑO SIN ORDER BY
+PARTITION BY Resetea el contador de cumsum cada cambio de año.
+Assumes that the ORDER BY function is that specified in PARTITION BY
+and therefore every value with the same year is assigned the same running_total
+(the added total for the year)
+*/
+SELECT standard_amt_usd,
+       DATE_TRUNC('year', occurred_at) as year,
+       SUM(standard_amt_usd) OVER 
+       (PARTITION BY DATE_TRUNC('year', occurred_at) 
+        ) AS running_total
 FROM orders
 
 /********************************************************************
