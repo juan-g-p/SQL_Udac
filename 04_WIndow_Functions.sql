@@ -20,9 +20,9 @@ OVER CLAUSE() ORDER BY AND PARTITION BY CLAUSES
 /********************************************************************
 CUMSUM EXAMPLE
 ********************************************************************/
--- 1. Create a running total of standard_amt_usd (in the orders table) 
--- over order time with no date truncation. Your final table should have 
--- two columns: one with the amount being added for each new row, 
+-- 1. Create a running total of standard_amt_usd (in the orders table)
+-- over order time with no date truncation. Your final table should have
+-- two columns: one with the amount being added for each new row,
 -- and a second with the running total.
 
 /*
@@ -36,11 +36,11 @@ SELECT standard_amt_usd,
        SUM(standard_amt_usd) OVER (ORDER BY occurred_at) AS running_total
 FROM orders
 
--- 2. Now, modify your query from the previous quiz to include partitions. 
--- Still create a running total of standard_amt_usd (in the orders table) over 
--- order time, but this time, date truncate occurred_at by year and partition 
--- by that same year-truncated occurred_at variable. Your final table should 
--- have three columns: One with the amount being added for each row, one for 
+-- 2. Now, modify your query from the previous quiz to include partitions.
+-- Still create a running total of standard_amt_usd (in the orders table) over
+-- order time, but this time, date truncate occurred_at by year and partition
+-- by that same year-truncated occurred_at variable. Your final table should
+-- have three columns: One with the amount being added for each row, one for
 -- the truncated date, and a final column with the running total within each year.
 /*
 CUMSUM POR AÑO
@@ -48,8 +48,8 @@ PARTITION BY Resetea el contador de cumsum cada cambio de año.
 */
 SELECT standard_amt_usd,
        DATE_TRUNC('year', occurred_at) as year,
-       SUM(standard_amt_usd) OVER 
-       (PARTITION BY DATE_TRUNC('year', occurred_at) 
+       SUM(standard_amt_usd) OVER
+       (PARTITION BY DATE_TRUNC('year', occurred_at)
         ORDER BY occurred_at) AS running_total
 FROM orders
 
@@ -62,8 +62,8 @@ and therefore every value with the same year is assigned the same running_total
 */
 SELECT standard_amt_usd,
        DATE_TRUNC('year', occurred_at) as year,
-       SUM(standard_amt_usd) OVER 
-       (PARTITION BY DATE_TRUNC('year', occurred_at) 
+       SUM(standard_amt_usd) OVER
+       (PARTITION BY DATE_TRUNC('year', occurred_at)
         ) AS running_total
 FROM orders
 
@@ -71,10 +71,10 @@ FROM orders
 AGGREGATE FUNCTIONS AND PARTITION
 ********************************************************************/
 
--- The ORDER and PARTITION define what is referred to as the “window”—the 
--- ordered subset of data over which calculations are made. Removing ORDER BY 
--- just leaves an unordered partition; in our query's case, each column's value 
--- is simply an aggregation (e.g., sum, count, average, minimum, or maximum) 
+-- The ORDER and PARTITION define what is referred to as the “window”—the
+-- ordered subset of data over which calculations are made. Removing ORDER BY
+-- just leaves an unordered partition; in our query's case, each column's value
+-- is simply an aggregation (e.g., sum, count, average, minimum, or maximum)
 -- of all the standard_qty values in its respective account_id.
 
 -- Example:
@@ -116,8 +116,8 @@ RANK(): ties are given the same numbers and numbers are skipped for subsequent r
 DENSE_RANK(): ties are given the same number and numbers are not skipped for subsequent records
 ********************************************************************/
 
--- Select the id, account_id, and total variable from the orders table, then create a column 
--- called total_rank that ranks this total amount of paper ordered (from highest to lowest) 
+-- Select the id, account_id, and total variable from the orders table, then create a column
+-- called total_rank that ranks this total amount of paper ordered (from highest to lowest)
 -- for each account using a partition. Your final table should have these four columns.
 SELECT id,
        account_id,
@@ -128,7 +128,7 @@ FROM orders
 /********************************************************************
 WINDOW FUNCTIONS AND ALIASES
 ********************************************************************/
--- If you are planning to write multiple window functions that leverage the same 
+-- If you are planning to write multiple window functions that leverage the same
 -- PARTITION BY, OVER and ORDER BY in a single query, aliases come in handy
 SELECT order_id,
        order_total,
@@ -172,3 +172,136 @@ WINDOW account_yearly_window AS
 /********************************************************************
 COMPARING ROW TO A PREVIOUS ROW
 ********************************************************************/
+/*
+https://www.sqlservertutorial.net/sql-server-window-functions/sql-server-lag-function/
+LAG(return_value, offset, default)
+       - return_value: return value of the previos row based on a specified offset.
+       - offset: number of rows back from the current row from which to access data
+       - default: value to be returned if the offset goes beyond the scope of the partition
+       - PARTITION BY: distributes rows of the result set into partitions to which the LAG() is applied
+       - ORDER BY: specifies the logical order of the rows in each partition to which the LAG() is applied
+Returns the value from a previos row to the current row in the table
+*/
+
+-- Step 1: look at the inner query and see what this creates
+SELECT     account_id, SUM(standard_qty) AS standard_sum
+FROM       orders
+GROUP BY   1
+
+-- Step 2: start bulding the outer query and name the inner query as sub
+SELECT account_id, standard_sum
+FROM   (
+        SELECT   account_id, SUM(standard_qty) AS standard_sum
+        FROM     orders
+        GROUP BY 1
+       ) sub
+
+-- Step 3 (part A): add a window function OVER (ORDER BY standard_sum) in the outer query
+-- that will create a result set in ascending order based on the standard_sum column
+-- Step 3 (part B): the LAG function creates a new column as part of the outer query.
+-- This new column named lag uses the values from the ordered "standard_sum" (part A in step 3).
+ELECT account_id,
+       standard_sum,
+       LAG(standard_sum) OVER (ORDER BY standard_sum) AS lag
+FROM   (
+        SELECT   account_id, SUM(standard_qty) AS standard_sum
+        FROM     orders
+        GROUP BY 1
+       ) sub
+
+-- Step 4: add the lag difference
+SELECT account_id,
+       standard_sum,
+       LAG(standard_sum) OVER (ORDER BY standard_sum) AS lag,
+       standard_sum - LAG(standard_sum) OVER (ORDER BY standard_sum) AS lag_difference
+FROM (
+       SELECT account_id,
+       SUM(standard_qty) AS standard_sum
+       FROM orders
+       GROUP BY 1
+      ) sub
+
+/*
+https://www.sqlservertutorial.net/sql-server-window-functions/sql-server-lag-function/
+LEAD(return_value, offset, default)
+       - return_value: return value of the previos row based on a specified offset.
+       - offset: number of rows back from the current row from which to access data
+       - default: value to be returned if the offset goes beyond the scope of the partition
+       - PARTITION BY: distributes rows of the result set into partitions to which the LAG() is applied
+       - ORDER BY: specifies the logical order of the rows in each partition to which the LAG() is applied
+Returns the value from a previos row to the current row in the table
+*/
+
+-- EXAMPLE
+-- Determine how the current order's total revenue ("total" from sales of all types of paper) compares to the
+-- next order's total revenue.
+       -- You will need: occurred_at, total_amt_usd in orders along with LEAD
+       -- Four columns: occurred_at, total_amt_usd, lead and lead_difference
+
+SELECT order_id,
+       account_id,
+       occurred_at,
+       total_amt_usd,
+       LEAD(total_amt_usd) OVER (ORDER BY total_amt_usd) as lead
+FROM orders
+
+/*
+PERCENTILES
+Window functions can be used to generate percentiles
+NTILE(# of buckets)
+       - ORDER BY determines which column to used to determine the tiles
+
+1. NTILE + the number of buckets you’d like to create within a column
+       (e.g., 100 buckets would create traditional percentiles, 4 buckets would create quartiles, etc.)
+2. OVER
+3. ORDER BY (optional, typically a date column)
+4. AS + the new column name
+
+PERCENTILES AND LOW NUMBER OF ROWS
+If the number of rows is lower than NTILE+ then NTILE will divide the rows into as many groups as there
+are members (rows) in the set, but then stop short of the requested number of groups.
+
+If working with very small windows keep this in mind and consider using quartiles or similarly small bands.
+*/
+NTILE (# of buckets) OVER
+       (ORDER BY ranking_column)
+       AS new_column name
+
+
+-- PERCENTILES EXAMES
+-- 1. Use the NTILE functionality to divide the accounts into 4 levels in terms of the amount of 
+-- standard_qty for their orders. Your resulting table should have the account_id, the occurred_at 
+-- time for each order, the total amount of standard_qty paper purchased, and one of four levels 
+-- in a standard_quartile column.
+
+-- Quartiles example
+-- This groups the order for each account and ranks all the orders within each account in quartiles
+-- The partition by ensures that the classification is carried out independently within each account.
+SELECT account_id,
+       occurred_at,
+       standard_qty,
+       NTILE(4) OVER (PARTITION BY account_id ORDER BY standard_qty) as std_quartiles
+FROM orders
+ORDER BY account_id DESC, std_quartiles DESC
+
+-- 2. Use the NTILE functionality to divide the accounts into two levels in terms of the amount of 
+-- gloss_qty for their orders. Your resulting table should have the account_id, the occurred_at 
+-- time for each order, the total amount of gloss_qty paper purchased, and one of two 
+-- levels in a gloss_half column.
+SELECT account_id,
+       occurred_at,
+       gloss_qty,
+       NTILE(2) OVER (PARTITION BY account_id ORDER BY gloss_qty) as gloss_half
+FROM orders
+ORDER BY account_id DESC, gloss_half DESC
+
+-- 3. Use the NTILE functionality to divide the orders for each account into 100 levels in terms of the 
+-- amount of total_amt_usd for their orders. Your resulting table should have the account_id, 
+-- the occurred_at time for each order, the total amount of total_amt_usd paper purchased, and one 
+-- of 100 levels in a total_percentile column.
+SELECT account_id,
+       total_amt_usd,
+       gloss_qty,
+       NTILE(100) OVER (PARTITION BY account_id ORDER BY total_amt_usd) as total_percentile
+FROM orders
+ORDER BY account_id DESC, total_percentile DESC
