@@ -84,6 +84,21 @@
 					"label": ""
 				}
 			]
+		},
+		{
+			"path": "05_AdvancedJoins_Performance",
+			"bookmarks": [
+				{
+					"line": 1,
+					"column": 9,
+					"label": ""
+				},
+				{
+					"line": 20,
+					"column": 31,
+					"label": ""
+				}
+			]
 		}
 	]
 }

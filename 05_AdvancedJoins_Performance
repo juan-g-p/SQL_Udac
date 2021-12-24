@@ -28,7 +28,7 @@ WHERE DATE_TRUNC('month', o.occurred_at) =
     (SELECT DATE_TRUNC('month', MIN(o.occurred_at)) FROM orders)
 ORDER BY o.occurred_at
 
--- Introduce comparison operators
+-- Example 1
 SELECT o.id,
        o.occurred_at as o_date,
        w.*
@@ -43,3 +43,10 @@ LEFT JOIN web_events w
 WHERE DATE_TRUNC('month', o.occurred_at) =
     (SELECT DATE_TRUNC('month', MIN(o.occurred_at)) FROM orders)
 ORDER BY o.occurred_at
+
+-- Example 2:
+/*
+COMPARISON OPERATORS AND STRINGS
+Applied to strings, ocmparison perators use alphabetical order for
+comparison
+*/
