@@ -57,3 +57,23 @@ FROM accounts a
 LEFT JOIN sales_reps sr
     ON a.sales_rep_id = sr.id
     AND a.primary_poc < sr.name
+
+/*****************************************************************
+SELF JOINS
+*****************************************************************/
+-- sELF join CAN BE TRICKY.
+-- Most of the time done in order to find cases where two events occur one after another
+-- Example: which accounts made multiple orders within 30 days.
+
+SELECT o1.id o1_id,
+       o1.account_id o1_account_id,
+       o1.occurred_at o1_occurred_at,
+       o2.id o2_id,
+       o2.account_id o2_account_id,
+       o2.occurred_at o2_occurred_at
+FROM orders o1
+LEFT JOIN orders o2
+    ON o1.account_id = o2.account_id
+    AND o2.occurred_at > o1.occurred_at
+    AND o2.occurred_at <= o1.occurred_at + INTERVAL '28 days'
+ORDER BY o1.account_id, o1.occurred_at
