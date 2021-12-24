@@ -27,3 +27,15 @@ FROM orders o
 WHERE DATE_TRUNC('month', o.occurred_at) =
     (SELECT DATE_TRUNC('month', MIN(o.occurred_at)) FROM orders)
 ORDER BY o.occurred_at
+
+-- Introduce comparison operators
+SELECT o.id,
+       o.occurred_at as o_date,
+       w.*
+FROM orders o
+LEFT JOIN web_events w
+    ON w.account_id = o.account_id
+    AND w.occurred_at < o.occurred_at
+WHERE DATE_TRUNC('month', o.occurred_at) =
+    (SELECT DATE_TRUNC('month', MIN(o.occurred_at)) FROM orders)
+ORDER BY o.occurred_at
