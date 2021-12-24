@@ -540,7 +540,17 @@ AGGREGATION FUNCITONS
 ********************************************************************/
 
 /*******************************************************************
-COUNT
+NULLS
+********************************************************************/
+-- NULLs are a datatype that specifies where no data exists in SQL.
+-- They are often ignored in our aggregation functions
+
+-- NULLs are different than a zero - they are cells where data does not exist.
+-- NULLs in a WHERE clause, we write IS NULL or IS NOT NULL
+-- don't use =, because NULL isn't considered a value in SQL. Rather, it is a property of the data.
+
+/*******************************************************************
+COUNT AND NULLS
 ********************************************************************/
 -- Since it is very unusual to have a row that is full of nulls, we can 
 -- use the count function to count the number of rows as follows
@@ -1071,6 +1081,8 @@ SELECT account_id,
             END AS unit_price
 FROM orders
 LIMIT 10;
+
+
 
 /*******************************************************************
 CASE AND AGGREGATIONS
