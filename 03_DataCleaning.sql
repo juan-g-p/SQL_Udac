@@ -103,19 +103,19 @@ SELECT  sf.date AS orig_date,
 FROM sf_crime_data sf
 
 /* 
-|| ALTERNATIVE CONCATENATE OPERATOR 
+ALTERNATIVE CONCATENATE OPERATOR 
 */
 SELECT date orig_date, (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) || '-' || SUBSTR(date, 4, 2)) new_date
 FROM sf_crime_data;
 
 /* 
-:: ALTERNATIVE CAST OPERATOR
+ALTERNATIVE CAST OPERATOR
 */
 SELECT date orig_date, (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) || '-' || SUBSTR(date, 4, 2))::DATE new_date
 FROM sf_crime_data;
 
 /*****************************************************************
-POSITION AND STRPOS 
+POSITION AND STR POSITION
 ******************************************************************/
 -- 1. Use the accounts table to create first and last name columns that 
 -- hold the first and last names for the primary_poc.

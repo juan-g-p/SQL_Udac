@@ -154,6 +154,66 @@
 					"label": ""
 				}
 			]
+		},
+		{
+			"path": "03_DataCleaning.sql",
+			"bookmarks": [
+				{
+					"line": 1,
+					"column": 15,
+					"label": ""
+				},
+				{
+					"line": 44,
+					"column": 6,
+					"label": ""
+				},
+				{
+					"line": 48,
+					"column": 13,
+					"label": ""
+				},
+				{
+					"line": 60,
+					"column": 6,
+					"label": ""
+				},
+				{
+					"line": 94,
+					"column": 5,
+					"label": ""
+				},
+				{
+					"line": 105,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 111,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 117,
+					"column": 17,
+					"label": ""
+				},
+				{
+					"line": 135,
+					"column": 17,
+					"label": ""
+				},
+				{
+					"line": 146,
+					"column": 2,
+					"label": ""
+				},
+				{
+					"line": 176,
+					"column": 14,
+					"label": ""
+				}
+			]
 		}
 	]
 }
