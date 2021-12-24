@@ -114,3 +114,62 @@ UNIONS VS JOINS
 -- EXAMPLE: several list of events... e-mail address...
 
 -- All this can be done with a union
+
+/*****************************************************************
+UNIONS OPERATOR
+*****************************************************************/
+-- https://www.techonthenet.com/sql/union.php
+
+-- 1. Combines the result sets of 2 or more select statements. 
+-- 2. It removes duplicate rows between the various select statements
+-- 3. Each select statement must have the SAME NUMBER OF FIELDS in 
+-- the result sets with similar (the same) data types
+-- 4. Example: when a user wants to pull together DISTINCT VALUES of specified
+-- columns that are spread across multiple tables
+-- 5. UNION ALL does NOT remove duplicate rows
+
+-- Example
+SELECT *
+    FROM web_events w1
+
+UNION
+
+SELECT *
+    FROM web_events w2
+
+/*
+UNIONS AND SUBQUERIES
+*/
+WITH web_events_total AS (
+    SELECT *
+    FROM web_events w1
+
+    UNION ALL
+
+    SELECT *
+    FROM web_events w2
+)
+
+SELECT channel,
+       COUNT(*) AS sessions
+    FROM web_events_total
+GROUP BY 1
+ORDER BY 2 DESC
+
+-- UNION QUIZZES
+-- 1. Write a selecting query that uses UNION ALL on two instances 
+-- (and selecting all columns) of the accounts table. Then inspect
+-- the results and answer the subsequent quiz.
+WITH double_accounts AS (
+    SELECT *
+    FROM accounts a1
+
+    UNION ALL
+
+    SELECT *
+    FROM accounts a2  
+)
+
+SELECT a.name, COUNT(*)
+FROM double_accounts a
+GROUP BY 1
