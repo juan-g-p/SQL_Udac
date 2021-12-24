@@ -173,3 +173,105 @@ WITH double_accounts AS (
 SELECT a.name, COUNT(*)
 FROM double_accounts a
 GROUP BY 1
+
+/**************************************************************
+PERFORMANCE TUNING
+**************************************************************/
+-- High level factors affecting thenumber of calculations
+-- 1. Table size
+-- 2. Joins
+-- 3. Aggregations
+
+-- Other things we cannot control:
+-- 1. Other users running concurrent queries
+-- 2. Database software and optimisation (e.g., Postgres is optimized differently than Redshift)
+
+-- Example: select a subset for time series data
+SELECT *
+FROM orders
+WHERE occurred_at >= '2016-01-01'
+      AND occurred_at < '2016-07-01'
+
+-- Most SQL system automatically append a limit
+
+/*
+LIMIT AND AGGREGATIONS
+*/
+-- Aggregation is performed first and then the results shown are limited
+-- So in this case it does not speed up your query
+
+-- To limit the dataset before performing the aggregation you need a subquery
+-- NOTE: applying a limit to a subquery will dramatically impact results.
+-- Use this only to test query logic.
+SELECT account_id,
+       SUM(poster_qty) AS sum_poster_qty
+FROM (
+    SELECT * 
+    FROM orders
+    LIMIT 100
+    ) sub
+WHERE occurred_at >= '2016-01-01'
+      AND occurred_at < '2016-07-01'
+GROUP BY 1
+
+/*
+JOINS REDUCE COMPLEXITY
+*/
+It is best to reduce table sizes before joining them.
+
+SELECT a.name,
+       sub.web_events
+FROM (
+    -- Aggregating before joining simplifies the operation
+    SELECT accounts_id,
+        COUNT(*) AS web_events
+    FROM web_events
+    GROUP BY 1
+    ) sub
+JOIN accounts a
+    ON a.id = sub.account_id
+ORDER BY 2 DESC
+
+/*
+EXPLAIN TO SHOW THE COMPLEXITY
+EXPLAIN can be added at the beginning of any working query
+Not perfectly accurate but rather interesting
+Gives you a sense of the order of operations and the cost
+This is most useful if you run explain on a query, modify
+expensive steps and then run explain again to see if the cost
+is reduced
+*/
+EXPLAIN
+SELECT *
+FROM web_events
+WHERE occurred_at >= '2016-01-01'
+      AND occurred_at < '2016-02-01'
+LIMIT 100
+
+/*
+SUBQUERIES TO IMPROVE PERFORMANCE
+*/
+-- Example: trying to monitor metrics on a daily basis.
+-- You need to join data from a few tables and then aggregate by day.
+-- You could do this in one big query, but it is best to aggregate individually
+-- and then join the pre-aggregated results
+
+-- With one big query
+
+-- This select logic counts the distinct sales_reps, orders and web-events per date
+-- JOINING ON DATES CAUES A DATA EXPLOSION!!
+        -- MANY-TO-MANY RELATIONSHIP --> MULTIPLICATIVE EFFECT
+        -- WE THEREFORE NEED COUNT DISTINCT INSTEAD OF COUNT
+SELECT DATE_TRUNC('day', o.occurred_at) AS date,
+       COUNT(DISTINCT a.sales_rep_id) AS active_sales_reps,
+       COUNT(DISTINCT o.id) AS orders,
+       COUNT(DISTINCT we.id) AS web_visits
+FROM accounts a
+JOIN orders o
+    ON o.account_id = a.id
+JOIN web_events we
+    ON DATE_TRUNC('day', we.occurred_at) = DATE_TRUNC('day', o.occurred_at)
+GROUP BY 1
+ORDER BY 1 DESC
+
+
