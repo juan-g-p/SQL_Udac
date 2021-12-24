@@ -61,6 +61,10 @@ LEFT JOIN sales_reps sr
 /*****************************************************************
 SELF JOINS
 *****************************************************************/
+/*
+INTERVALS FUNCTION
+https://www.postgresql.org/docs/8.2/functions-datetime.html
+*/
 -- sELF join CAN BE TRICKY.
 -- Most of the time done in order to find cases where two events occur one after another
 -- Example: which accounts made multiple orders within 30 days.
@@ -72,8 +76,41 @@ SELECT o1.id o1_id,
        o2.account_id o2_account_id,
        o2.occurred_at o2_occurred_at
 FROM orders o1
-LEFT JOIN orders o2
+LEFT JOIN orders o2 -- join to itself and giving it a different alias.
+                    -- this is necessary since otherwise it would be unclear.
     ON o1.account_id = o2.account_id
     AND o2.occurred_at > o1.occurred_at
     AND o2.occurred_at <= o1.occurred_at + INTERVAL '28 days'
 ORDER BY o1.account_id, o1.occurred_at
+
+-- Example with web-orders
+-- Web_events that occurred after but not more than 1 day after another web event
+SELECT w1.id w1_id,
+       w1.account_id w1_account_id,
+       w1.occurred_at w1_occurred_at,
+       w2.id w2_id,
+       w2.account_id w2_account_id,
+       w2.occurred_at w2_occurred_at,
+       w1.channel channel_1,
+       w2.channel channel_2
+FROM web_events w1
+LEFT JOIN web_events w2 -- join to itself and giving it a different alias.
+                        -- this is necessary since otherwise it would be unclear.
+    -- account_id is not the primary key of the web_events table.
+    -- The relationship will be many-to-many. Wthout furter conditions the join
+    -- is rather complex and the online environment just does not compute it.
+    -- Nonetheless we wish to compare events for the same accounts.
+    ON w1.account_id = w2.account_id
+    AND w2.occurred_at > w1.occurred_at -- this avoids merging on the exact same points.
+    AND w2.occurred_at <= w1.occurred_at + INTERVAL '1 day'
+ORDER BY w1.account_id, w1.occurred_at
+
+/*****************************************************************
+UNIONS VS JOINS
+*****************************************************************/
+-- JOINS ALLOW YOU TO COMBINE TWO DATA SETS SIDE BY SIDE
+-- UNIONS ALLOW YOU TO STACK ONE ON TOP OF ANOTHER
+
+-- EXAMPLE: several list of events... e-mail address...
+
+-- All this can be done with a union
