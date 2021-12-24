@@ -50,3 +50,10 @@ COMPARISON OPERATORS AND STRINGS
 Applied to strings, ocmparison perators use alphabetical order for
 comparison
 */
+SELECT a.name a_name, 
+       a.primary_poc, 
+       sr.name sr_name
+FROM accounts a
+LEFT JOIN sales_reps sr
+    ON a.sales_rep_id = sr.id
+    AND a.primary_poc < sr.name
