@@ -16,3 +16,14 @@ FROM accounts a
 FULL OUTER JOIN sales_reps s
     ON a.sales_rep_id = s.id
 -- WHERE a.sales_rep_id = NULL or s.id = NULL
+
+/*****************************************************************
+JOINS WITH COMPARISON OPERATORS
+*****************************************************************/
+-- START WITH A QUERY THAT TAKES THE FIRST ORDER FROM EACH ACCOUNT
+-- See section "subqueries"
+SELECT *
+FROM orders o
+WHERE DATE_TRUNC('month', o.occurred_at) =
+    (SELECT DATE_TRUNC('month', MIN(o.occurred_at)) FROM orders)
+ORDER BY o.occurred_at
