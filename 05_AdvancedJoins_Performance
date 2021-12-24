@@ -274,4 +274,42 @@ JOIN web_events we
 GROUP BY 1
 ORDER BY 1 DESC
 
+-- We can get the same results set aggregating the table separately so that the counts
+-- are performed across far smaller data serts
+SELECT COALESCE(orders.date, web_events.date) AS date,
+       orders.active_sales_reps,
+       orders.orders,
+       web_events.web_visits
+FROM (
+    -- First subquery
+    SELECT DATE_TRUNC('day', o.occurred_at) AS date,
+        COUNT(a.sales_rep_id) AS active_sales_reps,
+        COUNT(o.id) AS orders
+    FROM accounts a
+    JOIN orders o
+        ON o.account_id = a.id
+    GROUP BY 1
+    ) orders
 
+    -- We use the full join just in case one table has observations
+    -- in a month that the other table does not.
+    FULL JOIN
+
+    -- KEY:
+    -- By joining after having aggregating we have substantially reduced
+    -- the number of rows in each dataset prior to the join.
+    -- In fact, each day appeards only once since we have performed a
+    -- GRUOP BY. In this manner we now have a 1-to-1 relationship for
+    -- the days, instead of a many-to-many relationship, which caused an
+    -- explosion in the amount of data.
+
+    (
+    -- Second subquery
+    SELECT DATE_TRUNC('day', we.occurred_at) AS date,
+        COUNT(we.id) AS web_visits
+    FROM web_events we
+    GROUP BY 1
+    ) web_events
+
+ON web_events.date = orders.date
+ORDER BY 1 DESC
