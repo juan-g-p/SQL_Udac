@@ -34,7 +34,11 @@ SELECT o.id,
        w.*
 FROM orders o
 LEFT JOIN web_events w
+    -- even when using comparison operators, and = is often used
+    -- to make sure that the proper rows are joined
     ON w.account_id = o.account_id
+    -- comparison operator: each row is compared and those that
+    -- evaluate to true are joined
     AND w.occurred_at < o.occurred_at
 WHERE DATE_TRUNC('month', o.occurred_at) =
     (SELECT DATE_TRUNC('month', MIN(o.occurred_at)) FROM orders)
