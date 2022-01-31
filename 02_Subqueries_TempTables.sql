@@ -111,7 +111,7 @@ ORDER BY account, COUNT(*)
 -- This count will be our first aggregation needed.
 -- The table below provides the maximum times a channel was used for each
 -- account, but not the table.
-SELECT sub1.account, MAX(sub1.counts) max_chan
+SELECT sub1.account, (sub1.counts) max_chan
      FROM
          (SELECT a.name account, w.channel, COUNT(*) counts
          FROM accounts a

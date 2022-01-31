@@ -214,6 +214,21 @@
 					"label": ""
 				}
 			]
+		},
+		{
+			"path": "02_Subqueries_TempTables.sql",
+			"bookmarks": [
+				{
+					"line": 27,
+					"column": 0,
+					"label": ""
+				},
+				{
+					"line": 502,
+					"column": 10,
+					"label": ""
+				}
+			]
 		}
 	]
 }
