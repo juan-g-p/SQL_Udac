@@ -1,5 +1,122 @@
 /*******************************************************************
-FIRST SUBQUERY WRITTEN
+--:SUBQUERIES FUNDAMETALS
+*******************************************************************/
+/* 
+- Subqueries must be fully placed inside parentheses
+- Subqueries have TWO COMPONENTS TO CONSIDER:
+    - Placement
+    - Dependencies with the outer/larger query
+- Subqueries INDEPENDENCY:
+    - Most  of the time subqueries are fully independent. 
+        - Interimp/temp tables that can be executed on their own
+    - EXCEPTION:
+        - Subqueries correlated to its outer query cannot run independently
+            - This is rare and when it happens is normally with nested subqueries.
+ */
+
+/*******************************************************************
+--:PLACEMENT (SUBQUERIES)
+*******************************************************************/
+/* Four places where subqueries can be nested:
+ 
+/* - WITH:
+    - "Pseudo-create" a table from an existing table and visually scope
+      the temporary table at the top of the larger query */
+    WITH events AS (
+        SELECT DATE_TRUNC('day',occurred_at) AS day, 
+                    channel, COUNT(*) as events
+        FROM web_events 
+        GROUP BY 1,2),
+
+    SELECT channel, AVG(events) AS average_events
+    FROM events
+    GROUP BY channel
+    ORDER BY 2 DESC;
+
+    -- WITH and MULTIPLE TABLES:
+    WITH table1 AS (
+            SELECT *
+            FROM web_events),
+
+        table2 AS (
+            SELECT *
+            FROM accounts)
+
+
+    SELECT *
+    FROM table1
+    JOIN table2
+    ON table1.account_id = table2.id;
+      
+/* - NESTED:
+    - Used when you'd like the TEMPORARY QUERY TO ACT AS A FILTER within
+      the larger query, which implies that it OFTEN SITS WITHIN THE WHERE
+      clause */
+    SELECT *
+    FROM students
+    WHERE studet_id
+        IN ( SELECT DISTINCT student_id
+             FROM gpa_table
+             WHERE gpa > 3.5)
+        );
+
+/* - INLINE:
+    - Embedded within the FROM CLAUSE */
+    SELECT dept_name,
+           max_gpa
+    FROM   department_db x
+            ( SELECT dept_id,
+                     MAX(gpa) as max_gpa
+              FROM students
+              GROUP BY dept_id 
+            ) y
+    WHERE x.dept_id = y.dept_id
+    ORDER BY dept_name;
+
+/* - SCALAR */
+    SELECT
+        (SELECT MAX(salary) FROM employees_db) AS top_salary,
+        employee_name,
+    
+    FROM employees_db
+
+/*******************************************************************
+--:PERFORMANCE ADVANTAGES
+*******************************************************************/
+/* 
+READIBILITY: 
+- WITH and NESTED are most advantageous for readibility
+- SCALAR are advantageous for performance and are often used on smaller datasets
+*/
+
+/*******************************************************************
+--:DEPENDENCIES (SUBQUERIES)
+*******************************************************************/
+/* SIMPLE: */
+WITH dept_average as
+(
+    SELECT dept, AVG(salary) as avg_dept_salary
+    FROM employee
+    GROUP BY employee.dept
+)
+SELECT E.eid, E.ename, D.avg_dept_salary
+FROM employee E
+JOIN dept_average D
+ON E.dept = D.dept
+WHERE E.salary > D.avg_dept_salary
+
+/* CORRELATED */
+SELECT employee_id,
+       name
+FROM employees_db emp
+WHERE salary > (
+                SELECT AVG(salary)
+                FROM employees_db
+                WHERE department = emp.department -- THIS LINE DEPENDS ON THE OUTER FROM!
+                )
+
+/*******************************************************************
+--:FIRST SUBQUERY WRITTEN
 *******************************************************************/
 -- We would like to know which channels send the most traffic per day 
 -- on average to Parch and Posey. In order to do that, we'll need to 
@@ -25,7 +142,39 @@ ORDER BY 2 DESC
 -- 2- Outer query will run across the result set created by the inner query
 
 /*******************************************************************
-VIEWS
+--:VIEWS
+*******************************************************************/
+-- Tables in SQL reside in the database persistently
+-- VIEWS: virtaual tables derived from one or more tables.
+    -- Do not exist in a database, they reside IN MEMORY, just
+    -- like the result of any query is stored in the memory.
+
+--:CREATING A VIEW 
+CREATE VIEW VIEW_NAME
+AS
+SELECT ...
+FROM ...
+WHERE ...
+
+--: UPDATING BASE TABLES BY UPDATING VIEW
+/* 
+Not all views can be updated, because they do not exist physically in the database.
+    -- If the SELECT statement contains:
+        -- An AGGREGATE FUNCTION
+        -- GROUPING
+        -- JOIN
+    then you cannot update the table.
+ */
+
+--: INSERT OR DELETE A TUPLE IN THE DATABASE BY ADDING OR DELETING VEW
+    -- Posible if a veiw is created from a single base table
+
+--: ALTER VIEW DEFINITION:
+    -- Most databases allow you to alter a view. 
+        -- Example ORACLE and IBM DB2 --> CREATE or REPLACE VIEW to redefine a view
+
+/*******************************************************************
+--:VIEWS EXAMPLES
 *******************************************************************/
 -- Suppose you are managing sales representatives who are looking after the accounts 
 -- in the Northeast region only. The details of such a subset of sales 
@@ -69,7 +218,7 @@ select max(average_events)
 from v3;
 
 /*******************************************************************
-EXAMPLE OF NESTED SUBQUERY
+--:EXAMPLE OF NESTED SUBQUERY
 *******************************************************************/
 -- Month/year combo for the first order placed
 SELECT DATE_TRUNC('month', MIN(o.occurred_at))
@@ -90,10 +239,10 @@ WHERE DATE_TRUNC('month', o.occurred_at) =
     )
 
 /*******************************************************************
-MORE EXAMPLES OF SUBQUERIES
+--:MORE EXAMPLES OF SUBQUERIES
 *******************************************************************/
 /*******************************************************************
-SUBQUERIES USING JOINS WITH MULTUPLE CRITERIA
+--:SUBQUERIES USING JOINS WITH MULTUPLE CRITERIA
 *******************************************************************/
 -- WHAT IS THE TOP CHANNEL USED BY EACH ACCOUNT TO MARKET PRODUCTS?
 -- HOW OFTE WAS THE CHANNEL USED
@@ -148,7 +297,7 @@ JOIN (
 ORDER BY sub3.ct
 
 /*******************************************************************
-SUBQUERIE MANIA
+--:SUBQUERIE MANIA
 *******************************************************************/
 -- 1. Provide the name of the sales_rep in each region with the largest 
 -- amount of total_amt_usd sales.
@@ -500,14 +649,18 @@ FROM (
 ) sub1
 
 /*******************************************************************
-"WITH" AND SUBQUERIES
+--:"WITH" AND SUBQUERIES
 *******************************************************************/
 -- EXAMPLE 1
 WITH events AS (
           SELECT DATE_TRUNC('day',occurred_at) AS day, 
                         channel, COUNT(*) as events
           FROM web_events 
-          GROUP BY 1,2)
+          GROUP BY 1,2),
+
+    table2 AS (
+        ...
+    )
 
 SELECT channel, AVG(events) AS average_events
 FROM events

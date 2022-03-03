@@ -1,5 +1,15 @@
 /*****************************************************************
-LEFT-RIGHT QUIZ
+--:LEFT, RIGHT, SUBSTR
+******************************************************************/ 
+-- LEFT: extracts a # of Characters from a string starting from the left
+       LEFT(string, number_of_chars)
+-- RIGHT: extracts a # of characters from the string starting from the right
+       RIGHT(string, number_of_chars)
+-- SUBSTR: extracts a substring from a string (starting at any position)
+       SUBSTR(string, number_of_chars)
+
+/*****************************************************************
+--:LEFT-RIGHT QUIZ
 ******************************************************************/
 -- 1. In the accounts table, there is a column holding the website for each company. 
 -- The last three digits specify what type of web address they are using. 
@@ -42,12 +52,35 @@ FROM (SELECT name,
          FROM accounts) t1;
 
 /*****************************************************************
-SUBSTR
+--:STTRING_SPLIT
 ******************************************************************/
+-- IMAGINE such a format that you'd like to split into a table
+-- I hope they give more examples later
+student_information
+3930581,F,san  francisco,3.7,100000
+2842940,M,chicago,3.8,150000
+28492940,F,new york city,3.9,200000
 
-/*****************************************************************
-STTRING_SPLIT
-******************************************************************/
+WITH table AS (
+       SELECT student_information,
+              value,
+              ROW_NUMBER() OVER(PARTITION BY student_information ORDER BY(SELECT NULL)) AS row_number
+       FROM student_db
+            CROSS APPLY STRING_SPLIT(student_information, ',') AS back_values
+)
+
+SELECT student_information,
+       [1] AS STUDENT_ID,
+       [2] AS GENDER,
+       [3] AS CITY,
+       [4] AS GPA,
+       [5] AS SALARY
+FROM table
+PIVOT (
+       MAX(VALUE)
+       FOR row_number IN ([1],[2],[3],[4],[5])
+) AS PIVOT
+
 -- See word file
 -- WITH subquery
 -- ROW_NUMBER()
@@ -58,8 +91,15 @@ STTRING_SPLIT
 -- PIVOT
 
 /*****************************************************************
-CONCAT
+--:CONCAT
 ******************************************************************/
+-- CONCAT(string1, string2, string3)
+
+--:|| ALTERNATIVE CONCATENATE OPERATOR 
+SELECT date orig_date, (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) || '-' || SUBSTR(date, 4, 2)) new_date
+FROM sf_crime_data;
+
+
 -- Common use case: create a unique identifier
 
 -- 1. Suppose the company wants to assess the performance of all the sales representatives. 
@@ -92,10 +132,13 @@ SELECT CONCAT(t1.account_id, '_', t1.channel, '_', t1.counts)
 FROM table1 t1
 
 /*****************************************************************
-CAST 
+--:CAST
 ******************************************************************/
+-- CAST(expression AS datatype)
+
+-- Most common use: raw data as string to be set as appropriate data type
 SELECT  sf.date AS orig_date,
-		CAST (CONCAT(
+	     CAST (CONCAT(
             SUBSTR(sf.date,7,4), '/',
             SUBSTR(sf.date,1,2), '/',
             SUBSTR(sf.date,4,2), ' '
@@ -103,20 +146,29 @@ SELECT  sf.date AS orig_date,
 FROM sf_crime_data sf
 
 /* 
-ALTERNATIVE CONCATENATE OPERATOR 
+|| ALTERNATIVE CONCATENATE OPERATOR 
 */
 SELECT date orig_date, (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) || '-' || SUBSTR(date, 4, 2)) new_date
-FROM sf_crime_data;
+FROM sf_crime_data
 
-/* 
-ALTERNATIVE CAST OPERATOR
-*/
+--::: ALTERNATIVE CAST OPERATOR
 SELECT date orig_date, (SUBSTR(date, 7, 4) || '-' || LEFT(date, 2) || '-' || SUBSTR(date, 4, 2))::DATE new_date
-FROM sf_crime_data;
+FROM sf_crime_data
 
 /*****************************************************************
-POSITION AND STR POSITION
+--:POSITION and STRPOS
 ******************************************************************/
+-- POSITION: returns the position of the first occurrence of a substring
+       POSITION(substring in string)
+
+-- STRPOS: returns the position of a subststring within a string
+       STRPOS(substring in string)
+
+-- They are equivalent:
+POSITION is actually an ALIAS for STRPOS at the parser level
+POSITION(foo IN bar) is transformed into STRPOS(bar, foo) during parsing.
+
+
 -- 1. Use the accounts table to create first and last name columns that 
 -- hold the first and last names for the primary_poc.
 SELECT  LEFT(primary_poc, POSITION(' ' IN primary_poc)-1) first_name,
@@ -133,7 +185,7 @@ SELECT  LEFT(sr.name, POSITION(' ' IN sr.name)-1) first_name,
 FROM sales_reps sr
 
 /*****************************************************************
-EXERCISES CONCAT AND STR POSITOIN
+--:EXERCISES CONCAT AND STR POSITOIN
 ******************************************************************/
 -- 1. Each company in the accounts table wants to create an email address for 
 -- each primary_poc. The email address should be the first name 
@@ -174,27 +226,92 @@ SELECT first_name, last_name,
 FROM t1;
 
 /*****************************************************************
-COALESCE - EXERCISES
+--: COALESCE
 ******************************************************************/
+-- Rreturns the FIRST NON-NULL value in a list
+COALESCE(val1, val2, val3...):
+
+/* 
+-- Use case:
+multiple columns that have a combination of null and non-null falues.
+The user needs to extract the first non-null value.
+ */
+
+
+--:COALESCE and LEFT JOINS (EXAMPLE 1)
 -- IMPORTANT
 -- There is a row in the accounts table with the id = 1731 and name = 'Goldman Sachs Group' 
--- that does not have a matching row in the orders table. Therefore, the query above will 
--- return a row having NULL in each column from the orders table.
--- IN ADDITION: THE a.id COLUMN WILL BE SET TO NULL IN THE JOIN --> SQL Behavior by default?
+-- that does not have a matching row in the orders table. T
+-- in a LEFT JOIN:
+       -- if the values in the left table (here a.id) do not have matching
+       -- values on the right table (here o.account_id), the rows are
+       -- preserved, but the "joining" columns (a.id and o.account_id) are kept
+       -- as NULL for that particular row.
 -- IF WE WANT TO CORRECT THIS WE WILL HAVE TO USE COALESCE
 SELECT *
 FROM accounts a
 LEFT JOIN orders o
-ON a.id = o.account_id
+ON a.id = o.account_id 
 WHERE o.total IS NULL; -- with this condition we detect rows that were in accounts that 
                        -- do not have a corresponding row in orders
 
--- To fill the ID in the a.id column of the resulting join, we perform the following
+-- We will fill the following columns using COALESCE:
+       -- COALESCE(a.id, a.id): fills the NULL values in a.id with the values in the original a.id column 
+       
+       -- COALESCE(o.account_id, a.id): fills the NULL values in o.account_id (NULL values created when joining)
+       -- with the values in the original a.id column
+
+       -- COALESCE(o.standard_qty, 0): fills the NULL values created when joining with 0... etc.
+
+/* 
+NOTE the syntax:
+COALESCE(a.id, a.id)
+ */
 SELECT COALESCE(a.id, a.id) filled_id, a.name, a.website, a.lat, a.long, a.primary_poc, a.sales_rep_id, 
-       COALESCE(o.account_id, a.id) account_id, o.occurred_at, COALESCE(o.standard_qty, 0) standard_qty, 
-       COALESCE(o.gloss_qty,0) gloss_qty, COALESCE(o.poster_qty,0) poster_qty, COALESCE(o.total,0) total, 
-       COALESCE(o.standard_amt_usd,0) standard_amt_usd, COALESCE(o.gloss_amt_usd,0) gloss_amt_usd, 
-       COALESCE(o.poster_amt_usd,0) poster_amt_usd, COALESCE(o.total_amt_usd,0) total_amt_usd
+       COALESCE(o.account_id, a.id) account_id, o.occurred_at, 
+       -- Then fix the rest of the columns from the joined table that also will have no values
+       COALESCE(o.standard_qty, 0) standard_qty, 
+       COALESCE(o.gloss_qty,0) gloss_qty, 
+       COALESCE(o.poster_qty,0) poster_qty, 
+       COALESCE(o.total,0) total, 
+       COALESCE(o.standard_amt_usd,0) standard_amt_usd, 
+       COALESCE(o.gloss_amt_usd,0) gloss_amt_usd, 
+       COALESCE(o.poster_amt_usd,0) poster_amt_usd, 
+       COALESCE(o.total_amt_usd,0) total_amt_usd
 FROM accounts a
 LEFT JOIN orders o
-ON a.id = o.account_id;
+ON a.id = o.account_id
+
+--:COALESCE and MULTIPLE COLUMNS with ONLY 1 NON-NULL VALUE
+-- PROBLEM calculate total compensation field off the 3 types of income
+
+/* 
+| HOURLY_WAGE | SALARY      | SALES       |
+| null        | null        | 100         |
+| 8           | null        | null        |
+| null        | 200000      | null        |
+ */
+
+-- SOLUTION
+commission = 100
+COALESCE(hourly_wate * 40 * 52, salary, commission * sales) AS annual_income
+
+/*****************************************************************
+--: DEALING WITH NULLS - common strategies
+******************************************************************/
+--:COALESCE
+-- Return the first non-null values across a set of columns.
+-- Good approach only f a single column's value needs to be extracted
+-- whilst the rest are null
+-- Also good to fill some voids in LEFT JOIN
+
+--:DROP RECORDS
+-- Used to drop the row entirely if analyst decide this is feasible
+-- Removes data and data is precious.
+-- Think about the reason for those null values
+
+--:IMPUTATION
+-- You may want to IMPUTE missing values 
+       -- Examples of conservative approaches
+              -- Take MIN of a column...
+              -- Take the 25th percentile value...      
