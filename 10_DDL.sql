@@ -2,6 +2,9 @@
 --: ; in POSTGRESQL
 In psql you MUST add a semicolon at the end of a given command/query for it to execute.
 
+--:FULL POSTGRESQL DATA DEFINITION LANGUAGE DOCUMENTATION
+https://www.postgresql.org/docs/9.6/ddl.html
+
 /***************************************************************
 --:CREATE TABLE
 ****************************************************************/
@@ -376,9 +379,22 @@ ALTER TABLE "registrations" ALTER COLUMN "course_id" SET DATA TYPE INTEGER;
 ****************************************************************/
 --: DROP
     -- Remove a table from the system
+DROP TABLE "table_name";
 
 --:TRUNCATE
     -- Remove all the data in a table
     -- Keep the name and structure
+CREATE TABLE "demo" (
+    "id" SERIAL,
+    "name" VARCHAR
+);
+
+INSERT INTO "demo" ("name") VALUES ('Alice'), ('Bob');
+
+TRUNCATE TABLE "demo"; -- Does not restart the ID
+
+TRUNCATE TABLE "demo" RESTART IDENTITY; -- Restarts IDs
+
 --:COMMENT
     -- Add a custom, text comment on a column
+COMMENT ON COLUMN "demo"."column_name" IS 'your comment goes here'

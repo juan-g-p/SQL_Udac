@@ -62,7 +62,7 @@ LEFT JOIN sales_reps sr
 SELF JOINS
 *****************************************************************/
 /*
-INTERVALS FUNCTION
+TODO: INTERVALS
 https://www.postgresql.org/docs/8.2/functions-datetime.html
 */
 -- sELF join CAN BE TRICKY.

@@ -35,8 +35,21 @@ psql
 --:Describe a table
 ****************************************************/
 \d student
+\d+ table_name -- gives oyu additional info such as comments (description)
 
 /****************************************************
 --:Shortcut for select *
 ****************************************************/
 TABLE name_of_table;
+
+/****************************************************
+--:Get out of a page in PostgreSQL
+****************************************************/
+Press Q
+
+/************************************************************************ 
+--:TIMING
+*************************************************************************/
+--:Timing:
+-- we created a 1000000 rows database, otherwise everything would be too fast
+\timing on --> will return how much time it took to execute each query
