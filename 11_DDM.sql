@@ -265,7 +265,6 @@ CREATE TABLE "states" (
     "state" CHAR(2)
 );
 
-
 -- Bring the unique states_ids to "states" table
 INSERT INTO "states" ("state")
     SELECT DISTINCT "state" FROM "user_data";
